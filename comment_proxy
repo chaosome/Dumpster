@@ -1,0 +1,86 @@
+#!/usr/bin/perl -w
+use strict;
+use Getopt::Long;
+
+##TO DO##
+# 1) File permissions - do not use system call for that.
+
+my %opt;
+my $proxy_file = "/etc/apt/apt.conf.d/00proxy";
+
+#print "This is outisde of sub - $proxy_file\n";
+
+unless ( @ARGV ) {
+  usage()
+}
+
+GetOptions(\%opt, qw(
+   comment
+   uncomment
+))
+ or die("Error in command line arguments\n");
+
+
+##Call appropriate subroutines when arguments are passed.
+do_comment($proxy_file) if $opt{comment};
+do_uncomment($proxy_file) if $opt{uncomment};
+
+
+sub do_comment {
+ my ($proxy_file) = @_;
+ 
+ ##Open proxy file for read/write
+ open (my $in, '<', "$proxy_file") or die "Cannot open proxy file:$!";
+ open (my $out, '>', ".blah.new") or die "Cannot open temp proxy file:$!";
+
+ while ( <$in> ) {
+  if (/^\s*#/) {
+   print $out $_
+  } else {
+  s/^/# /g;
+  print $out $_;
+  }
+ }
+ close $in;
+ close $out;    
+ system("sudo rm -rf $proxy_file; sudo mv .blah.new $proxy_file; sudo chown root:root $proxy_file");  
+ print "All lines commented\n";
+
+}
+
+
+sub do_uncomment {
+ my ($proxy_file) = @_;
+
+ ##Open proxy file for read/write
+ open (my $in, '<', "$proxy_file") or die "Cannot open proxy file:$!";
+ open (my $out, '>', ".blah.new") or die "Cannot open temp proxy file:$!";
+
+ while ( <$in> ) {
+  if (/^\s*#/) {
+   s/^\s*#\s*//g;
+   print $out $_;
+  } else {
+    print $out $_;
+  }
+ }
+ close $in;
+ close $out;
+ system("sudo rm -rf $proxy_file; sudo mv .blah.new $proxy_file; sudo chown root:root $proxy_file");
+ print "All lines uncommented\n";
+
+
+}
+
+
+
+sub usage { 
+ print <<"EOUSAGE";
+ Comment/uncomment the apt proxy file:
+ usage: $0
+            --comment   : To comment all lines
+            --uncomment : to uncomment all lines
+EOUSAGE
+ exit 1;
+
+}

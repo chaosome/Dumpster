@@ -1,0 +1,5 @@
+#!/usr/bin/perl -w
+
+$epoc = time();
+$datestring = localtime($epoc);
+print "Date-Time NOW: $datestring   Epoc NOW: $epoc\n"; 
